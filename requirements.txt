@@ -1,0 +1,6 @@
+black
+langchain
+langchain-openai
+langchain-community
+fastapi
+python-dotenv
