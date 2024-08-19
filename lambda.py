@@ -5,10 +5,11 @@ from pprint import pprint as pp
 
 from dotenv import load_dotenv
 
+from mangum import Mangum
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import requests
 from langchain.chains import APIChain
-from langchain_community.utilities import RequestsWrapper
 from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import OpenAI, ChatOpenAI
@@ -25,6 +26,17 @@ os.environ["LANGCHAIN_WANDB_TRACING"] = "false"
 
 
 app = FastAPI()
+handler = Mangum(app)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Paths to include in the API docs
 filter_paths = [
@@ -183,21 +195,15 @@ conversation_memory = ConversationBufferMemory(memory_key="chat_history",
 
 @app.get("/")
 def read_root():
-    return {"response": "Apstra Assistant"}
+    return {"response": "Hello I am your Apstra Assistant"}
 
-
-class ChatRequest(BaseModel):
-    message: str
-    apstra_url: str
-    username: str
-    password: str
 
 @app.post("/chat")
-async def chat(request: ChatRequest):
-    message = request.message.strip()
-    apstra_url = request.apstra_url
-    username = request.username
-    password = request.password
+def chat(request: dict):
+    message = request['message'].strip()
+    apstra_url = request['apstra_url']
+    username = request['username']
+    password = request['password']
 
     # Build Apstra API Docs
     filtered_apstra_spec = build_apstra_docs(apstra_url, filter_paths)
@@ -220,4 +226,3 @@ async def chat(request: ChatRequest):
 
     resp = api_chain.invoke({"question": message})
     return {"response": resp}
-
