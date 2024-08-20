@@ -69,12 +69,12 @@ if app_backend and apstra_url and username and password:
         try:
             response = requests.post(f"{app_backend}/chat", json=payload)
             if response.status_code == 200:
-                response_data = response.json()
+                response_data = response.json()["response"]
 
                 # Append user and assistant messages to chat history
                 st.session_state["chat_history"].append({"role": "You", "content": user_message})
                 st.session_state["chat_history"].append(
-                    {"role": "Apstra Assistant", "content": response_data.get("response", "No response from server")})
+                    {"role": "Apstra Assistant", "content": response_data.get("output", "No response from server")})
             else:
                 st.error(f"Error: {response.status_code} - {response.text}")
         except requests.exceptions.RequestException as e:
