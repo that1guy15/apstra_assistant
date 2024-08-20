@@ -221,7 +221,7 @@ def chat(request: dict):
         api_response_prompt=api_response_prompt,
         headers=auth_headers,
         verbose=True,
-        limit_to_domains=[f"{apstra_url}"],
+        limit_to_domains=[apstra_url],
     )
 
     resp = api_chain.invoke({"question": message})
