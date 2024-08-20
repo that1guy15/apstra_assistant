@@ -108,7 +108,7 @@ def filter_openapi_spec(included_paths: List, api_spec: Dict) -> Dict:
 
 # Load Apstra Server API docs
 def build_apstra_docs(apstra_server: str, include_paths: list[str]) -> dict:
-    docs_raw = requests.get(f"{apstra_server}/api/docs")
+    docs_raw = requests.get(f"{apstra_server}api/docs")
     if docs_raw.status_code == 200:
         apstra_api_docs = docs_raw.json()
         apstra_api_docs["host"] = apstra_server
@@ -149,6 +149,11 @@ def apstra_login(apstra_server: str, username: str, password: str) -> dict:
         print(f"Failed to authenticate. Error: {e}")
         return None
 
+
+def ensure_trailing_slash(url: str) -> str:
+    if not url.endswith('/'):
+        url += '/'
+    return url
 
 # Set Prompts
 api_url_template = """
@@ -201,7 +206,7 @@ def read_root():
 @app.post("/chat")
 def chat(request: dict):
     message = request['message'].strip()
-    apstra_url = request['apstra_url']
+    apstra_url = ensure_trailing_slash(request['apstra_url'])
     username = request['username']
     password = request['password']
 

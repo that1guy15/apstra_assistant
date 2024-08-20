@@ -3,6 +3,9 @@ import hmac
 import requests
 
 
+st.title("Apstra Assistant")
+
+
 def check_password():
     """Returns `True` if the user had the correct password."""
 
@@ -29,15 +32,16 @@ def check_password():
 
 if not check_password():
     st.stop()  # Do not continue if check_password is not True.
+else:
+    st.caption('This is a prototype of a LangChain powered Apstra Assistant.')
+    st.warning('This tool can make changes to your Apstra environment. Please use with caution.')
 
-# Set up the chat page layout
-st.title("Apstra Assistant")
-st.caption('This is a prototype of a LangChain powered Apstra Assistant.')
-st.warning('This tool can make changes to your Apstra environment. Please use with caution.')
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# Initialize chat history in session state if not already initialized
-if "chat_history" not in st.session_state:
-    st.session_state["chat_history"] = []
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
 with st.sidebar:
     st.title('Apstra Assistant')
@@ -46,36 +50,45 @@ with st.sidebar:
     username = st.text_input('Apstra username:', 'admin')
     password = st.text_input('Apstra password:', type='password')
 
-# Display chat history
-for chat in st.session_state["chat_history"]:
-    st.write(f"**{chat['role']}:** {chat['content']}")
+example_messages = [
+    "Does any blueprint have active anomalies?",
+    "List all blueprints and the total number of active anomalies in each blueprint.",
+    "List all systems associated with the blueprint 'Test Blueprint'."
+]
 
-# Check if all required parameters are provided
+def generate_motd():
+    first_msg = "Here are a few questions you can try:\n"
+    return first_msg + "\n ".join([f"- {message}" for message in example_messages])
+
 if app_backend and apstra_url and username and password:
-    # Display a text input box for the chat
-    user_message = st.text_input("Your Message", placeholder="Does any blueprint have active anomalies?")
+    if not st.session_state.messages:
+        with st.chat_message("assistant"):
+            st.markdown(generate_motd())
 
-    # Send the message when the user presses Enter or clicks Send
-    if st.button("Send") and user_message:
-        # Prepare the payload for the POST request
+    if prompt := st.chat_input("How may I assist your today?"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
         payload = {
             "apstra_url": apstra_url,
             "username": username,
             "password": password,
-            "message": user_message
+            "message": prompt
         }
 
-        # Send the POST request
-        try:
-            response = requests.post(f"{app_backend}/chat", json=payload)
-            if response.status_code == 200:
-                response_data = response.json()["response"]
+        with st.chat_message("assistant"):
+            try:
+                resp = requests.post(f"{app_backend}/chat", json=payload)
+                if resp.status_code == 200:
+                    resp_data = resp.json()["response"]
 
-                # Append user and assistant messages to chat history
-                st.session_state["chat_history"].append({"role": "You", "content": user_message})
-                st.session_state["chat_history"].append(
-                    {"role": "Apstra Assistant", "content": response_data.get("output", "No response from server")})
-            else:
-                st.error(f"Error: {response.status_code} - {response.text}")
-        except requests.exceptions.RequestException as e:
-            st.error(f"Error: {str(e)}")
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": resp_data["output"]}
+                )
+            except:
+                st.error(f"Error: {resp.status_code} - {resp.text}")
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": "An error occurred. Please try again."}
+                )
+                st.rerun()
