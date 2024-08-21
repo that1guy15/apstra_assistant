@@ -28,9 +28,8 @@ def check_password():
         st.error("😕 Password incorrect")
     return False
 
-
+# Do not continue if check_password is not True.
 if not check_password():
-    """Do not continue if check_password is not True."""
     st.stop()
 else:
     st.caption('This is a prototype of a LangChain powered Apstra Assistant.')
@@ -54,7 +53,7 @@ def generate_motd():
 
 # Display chat messages
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
+    with st.chat_message(message["role"], avatar=message.get("avatar", None)):
         st.markdown(message["content"])
 
 # Sidebar inputs
@@ -67,7 +66,7 @@ with st.sidebar:
 
 # Initial message from assistant
 if not st.session_state.messages:
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="apstra_icon.png"):
         st.markdown(generate_motd())
 
 # User input and API interaction
@@ -83,16 +82,34 @@ if prompt := st.chat_input("How may I assist you today?"):
         "message": prompt
     }
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="apstra_icon.png"):
         try:
             resp = requests.post(f"{app_backend}/chat", json=payload)
             if resp.status_code == 200:
                 resp_data = resp.json()["response"]
-                st.session_state.messages.append({"role": "assistant", "content": resp_data["output"]})
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": resp_data["output"],
+                        "avatar": "apstra_icon.png"
+                    }
+                )
                 st.markdown(resp_data["output"])
             else:
                 st.error(f"Error: {resp.status_code} - {resp.text}")
-                st.session_state.messages.append({"role": "assistant", "content": "An error occurred. Please try again."})
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": "An error occurred. Please try again.",
+                        "avatar": "apstra_icon.png"
+                    }
+                )
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
-            st.session_state.messages.append({"role": "assistant", "content": "An error occurred. Please try again."})
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": "An error occurred. Please try again.",
+                    "avatar": "apstra_icon.png"
+                }
+            )
