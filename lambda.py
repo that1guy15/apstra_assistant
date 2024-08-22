@@ -229,5 +229,8 @@ def chat(request: dict):
         limit_to_domains=[apstra_url],
     )
 
-    resp = api_chain.invoke({"question": message})
-    return {"response": resp}
+    try:
+        resp = api_chain.invoke({"question": message})
+        return {"response": resp}
+    except Exception as e:
+        return {"response": f"Error running chain: {str(e)}"}

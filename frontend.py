@@ -100,7 +100,7 @@ if prompt := st.chat_input("How may I assist you today?"):
                 st.session_state.messages.append(
                     {
                         "role": "assistant",
-                        "content": "An error occurred. Please try again.",
+                        "content": f"Error: {resp.status_code} - {resp.text}",
                         "avatar": "apstra_icon.png"
                     }
                 )
@@ -109,7 +109,7 @@ if prompt := st.chat_input("How may I assist you today?"):
             st.session_state.messages.append(
                 {
                     "role": "assistant",
-                    "content": "An error occurred. Please try again.",
+                    "content": f"Error: {str(e)}",
                     "avatar": "apstra_icon.png"
                 }
             )
